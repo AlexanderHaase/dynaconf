@@ -6,7 +6,7 @@ namespace dynaconf {
 	///
 	/// @param parent scope for recursive resolution.
 	///
-	Scope::Scope( const std::shared_ptr<Scope> & parent = std::shared_ptr<Scope>{ nullptr } )
+	Scope::Scope( const std::shared_ptr<Scope> & parent )
 	: next( parent )
 	{}
 
@@ -17,14 +17,14 @@ namespace dynaconf {
 	/// @param index to resolve.
 	/// @return Definition or nullptr.
 	///
-	std::shared_ptr<DefinitionBase> Scope::resolve( const std::type_index & index )
+	std::shared_ptr<Definition> Scope::resolve( const std::type_index & index ) const
 	{
 		std::unique_lock<std::mutex> lock( mutex, std::try_to_lock );
 
 		const auto result = definitions.find( index );
 		if( result == definitions.end() )
 		{
-			return next ? next->resolve( index ) : std::shared_ptr<DefinitionBase>( nullptr );
+			return next ? next->resolve( index ) : std::shared_ptr<Definition>( nullptr );
 		}
 		else
 		{
@@ -37,21 +37,14 @@ namespace dynaconf {
 	/// @param definition to set as r-reference.
 	/// @return true on success, false if Class is already defined.
 	///
-	bool Scope::define( std::shared_ptr<DefinitionBase> && definition )
+	bool Scope::define( std::shared_ptr<Definition> && definition )
 	{
 		std::unique_lock<std::mutex> lock( mutex, std::try_to_lock );
 
-		auto index = definition->index();
-		const auto hint = definitions.find( index );
+		auto result = definitions.emplace( std::piecewise_construct,
+			std::forward_as_tuple( definition->index() ),
+			std::forward_as_tuple( std::move( definition ) ) );
 
-		if( hint == definitions.end() )
-		{
-			definitions.emplace( hint, std::piecewise_construct, std::move( index ), std::move( definition ) );
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return result.second;
 	}
 }

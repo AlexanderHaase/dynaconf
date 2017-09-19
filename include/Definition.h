@@ -1,7 +1,13 @@
 #pragma once
 #include <memory>
+#include <typeindex>
+#include <typeinfo>
 
 namespace dynaconf {
+
+	// Forward Declare scope...
+	//
+	class Scope;
 
 	/// Base class for definition for a class--erases all type information.
 	///
@@ -30,7 +36,7 @@ namespace dynaconf {
 	/// @tparam Class struct or class provided by this definition.
 	///
 	template < typename Class >
-	class Provider : public Provider {
+	class Provider : public Definition {
 	public:
 		/// Virtual destructor for chaining...
 		///
@@ -47,7 +53,7 @@ namespace dynaconf {
 		/// @param scope to use for constructing the instance of the described class.
 		/// @return shared pointer to instance of the class.
 		///
-		virtual std::shared_ptr<Class> instantiate( const std::shared_ptr<Scope> & scope ) = 0;
+		virtual std::shared_ptr<Class> instantiate( const std::shared_ptr<const Scope> & scope ) = 0;
 	};
 
 
@@ -67,7 +73,7 @@ namespace dynaconf {
 		/// @param scope ignored.
 		/// @return shared pointer to singleton instance.
 		///
-		virtual std::shared_ptr<Class> instantiate( const std::shared_ptr<Scope> & scope )
+		virtual std::shared_ptr<Class> instantiate( const std::shared_ptr<const Scope> & )
 		{
 			return instance;
 		}
@@ -108,8 +114,8 @@ namespace dynaconf {
 	/// @tparam Class defined by the singleton.
 	/// @tparam Functor class providing new instances given the scope.
 	///
-	template < typename Class, template Functor >
-	class Factory : public Provider<Class>, protected Functor : {
+	template < typename Class, typename Functor >
+	class Factory : public Provider<Class>, protected Functor {
 	public:
 		/// Virtual destructor for chaining...
 		///
@@ -117,7 +123,7 @@ namespace dynaconf {
 
 		/// Delegate instance creation to the functor
 		///
-		virtual std::shared_ptr<Class> instantiate( const std::shared_ptr<Scope> & scope )
+		virtual std::shared_ptr<Class> instantiate( const std::shared_ptr<const Scope> & scope )
 		{
 			return Functor::operator() ( scope );
 		}
@@ -141,7 +147,7 @@ namespace dynaconf {
 	/// @param functor l- or r-reference.
 	/// @return shared pointer to factory.
 	///
-	template< typename Class, template Functor >
+	template< typename Class, typename Functor >
 	auto make_factory( Functor && functor ) -> std::shared_ptr< Factory< Class, Functor > >
 	{
 		return std::make_shared< Factory<Class, Functor> >( std::forward<Functor>( functor ) );
@@ -150,12 +156,14 @@ namespace dynaconf {
 
 	/// Syntatic sugar for creating a Factory that uses new/delete.
 	///
+	/// TODO: Refactor into c++11 variant.
+	///
 	/// @tparam Class defined by the singleton.
 	/// @return shared pointer to factory.
 	///
-	template< typename Class >
+	/*template< typename Class >
 	auto make_factory( void )
 	{
 		return make_factory<Class>( []( const std::shared_ptr<Scope> & ) { return std::make_shared<Class>(); } );
-	}
+	}*/
 }
