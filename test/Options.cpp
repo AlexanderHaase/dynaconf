@@ -36,7 +36,7 @@ SCENARIO( "options should provide for multiple named definitions of object" )
 
 			REQUIRE_FALSE( dynaconf::set<ValueType>( scope, "0", options ) );
 			REQUIRE( dynaconf::set<ValueType>( scope, "1", options ) );
-			REQUIRE( dynaconf::get<ValueType>( scope )->get() == 1 );
+			REQUIRE( dynaconf::get<ValueType>( scope )->value() == 1 );
 		}
 	}
 }

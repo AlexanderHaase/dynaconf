@@ -10,21 +10,27 @@ namespace dynaconf {
 	class NamedType {
 	public:
 		explicit NamedType( const T & value )
-		: value( value )
+		: instance( value )
 		{}
 
 		template < typename Check = T, typename = typename std::enable_if<!std::is_reference<Check>::value>::type >
-		explicit NamedType( T && value )
-		: value( std::move( value ) )
+		explicit NamedType( Check && value )
+		: instance( std::forward<Check>( value ) )
 		{}
 
-		explicit operator T& () { return value; }
-		explicit operator const T & () { return value; }
+		operator T& () { return value(); }
+		operator const T & () { return value(); }
 
-		T & get() { return value; }
-		const T& get() const { return value; }
+		T & value() { return instance; }
+		const T& value() const { return instance; }
 
 	protected:
-		T value;
+		T instance;
+	};
+
+	template < typename Parameter >
+	class NamedType<void, Parameter> {
+	public:
+		explicit NamedType() {};
 	};
 }
