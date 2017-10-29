@@ -19,7 +19,7 @@ namespace dynaconf {
 	///
 	std::shared_ptr<Definition> Scope::resolve( const std::type_index & index ) const
 	{
-		std::unique_lock<std::mutex> lock( mutex, std::try_to_lock );
+		std::unique_lock<std::mutex> lock( mutex );
 
 		const auto result = definitions.find( index );
 		if( result == definitions.end() )
@@ -39,7 +39,7 @@ namespace dynaconf {
 	///
 	bool Scope::define( std::shared_ptr<Definition> && definition )
 	{
-		std::unique_lock<std::mutex> lock( mutex, std::try_to_lock );
+		std::unique_lock<std::mutex> lock( mutex );
 
 		auto result = definitions.emplace( std::piecewise_construct,
 			std::forward_as_tuple( definition->index() ),

@@ -10,7 +10,7 @@ namespace dynaconf {
 	///
 	bool Options::define( std::shared_ptr<Definition> && definition, const std::string & key )
 	{
-		std::unique_lock<std::mutex> lock( mutex, std::try_to_lock );
+		std::unique_lock<std::mutex> lock( mutex );
 		auto index = definition->index();
 
 		// attempt update cluster
@@ -30,7 +30,7 @@ namespace dynaconf {
 	///
 	std::shared_ptr<Definition> Options::resolve( const std::type_index & index, const std::string & key ) const
 	{
-		std::unique_lock<std::mutex> lock( mutex, std::try_to_lock );
+		std::unique_lock<std::mutex> lock( mutex );
 		auto cluster = clusters.find( index );
 		if( cluster != clusters.end() )
 		{
